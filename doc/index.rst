@@ -1,41 +1,37 @@
 About
 =====
 
-Websockets in the `Mys programming language`_.
+A Discord client in the `Mys programming language`_.
 
-Project: https://github.com/mys-lang/package-websocket
+Project: https://github.com/mys-lang/package-discord
 
 Examples
 ========
 
 .. code-block:: python
 
-   from websocket.client import Client
+   from discord import Client
+   from discord import Handler
+
+   class MyHandler(Handler):
+
+       def on_ready(self, client: Client):
+           print("We have logged in as {client.user}.")
+
+       def on_message(self, message: Message, client: Client):
+           if message.author == client.user:
+               return
+
+           if message.content == "!hello":
+               client.send("Hello!")
 
    def main():
-       client = Client()
-       client.connect("ws://localhost:8765")
-
-       name = input("What's your name? ")
-       client.write_string(name)
-       print(f"> {name}")
-
-       greeting = client.read_string()
-       print(f"< {greeting}")
-
-       client.disconnect()
+       client = Client(MyHandler())
+       client.run("your token here")
 
 Functions and types
 ===================
 
-Client side
------------
-
-.. mysfile:: src/client.mys
-
-Server side
------------
-
-.. mysfile:: src/server.mys
+.. mysfile:: src/lib.mys
 
 .. _Mys programming language: https://mys.readthedocs.io/en/latest/
