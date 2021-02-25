@@ -1,5 +1,8 @@
+class User:
+    pass
+
 class Message:
-    author: string
+    author: User
     content: string
     channel: Channel
 

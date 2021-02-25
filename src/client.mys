@@ -1,6 +1,7 @@
 from fiber import Fiber
 from . import Message
 from . import Channel           
+from . import User           
 
 class HeartbeatFiber(Fiber):
     _client: Client
@@ -14,7 +15,7 @@ class HeartbeatFiber(Fiber):
             
 
 class Client:
-    user: string
+    user: User
     _handler: Handler
     _websocket: Websocket
     _heartbeat_fiber: HeartbeatFiber
