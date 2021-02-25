@@ -1,0 +1,50 @@
+from fiber import Fiber
+from . import Message
+from . import Channel           
+
+class HeartbeatFiber(Fiber):
+    _client: Client
+    
+    def run(self):
+        while True:
+            sleep(1.0)
+            self._response_event.clear()
+            self._client.send()
+            self._response_event.wait(1.0)
+            
+
+class Client:
+    user: string
+    _handler: Handler
+    _websocket: Websocket
+    _heartbeat_fiber: HeartbeatFiber
+    
+    def __init__(self, handler: Handler):
+        self.user = None
+        self._handler = handler
+        self._reader_fiber = None
+        self._heartbeat_fiber = None
+
+    def run(self, token: string):
+        self._websocket = Websocket()
+        self._websocket.connect("wss://gateway.discord.gg/?v=8&encoding=json")
+        self._heartbeat_fiber = HeartbeatFiber()
+        self._heartbeat_fiber.start()
+        
+        while True:
+            frame = self._read_frame()
+
+            match frame.op:
+                case 1:
+                    message = Message("foobar", "!ping", Channel())
+                    self._handler.on_message(message, self)
+
+@trait
+class Handler:
+
+    def on_message(self, message: Message, client: Client):
+        """Called when a data message is received.
+
+        """
+
+        print(message)

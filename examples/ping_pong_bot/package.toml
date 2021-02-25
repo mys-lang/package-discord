@@ -1,0 +1,9 @@
+[package]
+name = "ping_pong"
+version = "0.1.0"
+authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
+description = "Add a short package description here."
+
+[dependencies]
+discord = { path = "../.." }
+argparse = "*"

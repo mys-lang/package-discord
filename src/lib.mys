@@ -1,2 +1,9 @@
-class Client:
-    pass
+class Message:
+    author: string
+    content: string
+    channel: Channel
+
+class Channel:
+
+    def send(self, text: string):
+        pass

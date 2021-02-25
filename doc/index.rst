@@ -15,15 +15,12 @@ Examples
 
    class MyHandler(Handler):
 
-       def on_ready(self, client: Client):
-           print("We have logged in as {client.user}.")
-
        def on_message(self, message: Message, client: Client):
            if message.author == client.user:
                return
 
            if message.content == "!hello":
-               client.send("Hello!")
+               message.channel.send("Hello!")
 
    def main():
        client = Client(MyHandler())

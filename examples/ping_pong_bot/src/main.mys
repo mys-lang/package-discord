@@ -1,0 +1,21 @@
+from argparse import Parser
+from discord.client import Client
+from discord.client import Handler
+from discord import Message
+
+class PingPongHandler(Handler):
+
+    def on_message(self, message: Message, client: Client):
+        if message.author == client.user:
+            return
+
+        if message.content == "!ping":
+            message.channel.send("pong")
+
+def main(argv: [string]):
+    parser = Parser("ping_pong_bot")
+    parser.add_positional("bot_token")
+    args = parser.parse(argv)
+
+    client = Client(PingPongHandler())
+    client.run(args.value_of("bot_token"))
