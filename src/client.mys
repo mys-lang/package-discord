@@ -1,51 +1,86 @@
 from fiber import Fiber
+from fiber import Event
+from fiber import Queue
 from . import Message
-from . import Channel           
-from . import User           
+from . import Channel
+from . import User
+from websocket.client import WebsocketClient
+from websocket.client import WebsocketClientHandler
 
 class HeartbeatFiber(Fiber):
     _client: Client
-    
+    _event: Event
+
+    def __init__(self, client: Client):
+        self._client = client
+        self._event = Event()
+
     def run(self):
         while True:
             sleep(1.0)
-            self._response_event.clear()
+            self._event.clear()
             self._client.send()
-            self._response_event.wait(1.0)
-            
 
-class Client:
+            if self._event.wait(1.0):
+                self._client.reset()
+
+    def pong_received(self):
+        self._event.set()
+
+@trait
+class Handler:
+
+    def on_message(self, message: Message):
+        """Called when a data message is received.
+
+        """
+
+class Client(WebsocketClientHandler):
     user: User
     _handler: Handler
-    _websocket: Websocket
+    _websocket: WebsocketClient
     _heartbeat_fiber: HeartbeatFiber
-    
+
     def __init__(self, handler: Handler):
         self.user = None
         self._handler = handler
         self._reader_fiber = None
         self._heartbeat_fiber = None
+        self._pong_event = None
+
+    def _read_packet(self) -> Packet:
+        try:
+            return self._websocket.recv_text()
+        except ConnectionClosedError:
+            return None
+
+    def reset(self):
+        self._websocket.disconnect()
 
     def run(self, token: string):
-        self._websocket = Websocket()
-        self._websocket.connect("wss://gateway.discord.gg/?v=8&encoding=json")
-        self._heartbeat_fiber = HeartbeatFiber()
-        self._heartbeat_fiber.start()
-        
+        self._websocket = WebsocketClient(
+            "wss://gateway.discord.gg/?v=8&encoding=json",
+            WebsocketHandler(self._queue))
+
         while True:
-            frame = self._read_frame()
+            self._websocket.connect()
+            self._websocket.send_text()
+            message = self._websocket.recv_text()
+            self._heartbeat_fiber = HeartbeatFiber(self)
+            self._heartbeat_fiber.start()
 
-            match frame.op:
-                case 1:
-                    message = Message("foobar", "!ping", Channel())
-                    self._handler.on_message(message, self)
+            while True:
+                packet = self._read_packet()
 
-@trait
-class Handler:
+                if packet is None:
+                    break
 
-    def on_message(self, message: Message, client: Client):
-        """Called when a data message is received.
+                match packet.op:
+                    case 1:
+                        self._handler.on_message(message)
+                    case 2:
+                        self._heartbeat_fiber.pong_received()
 
-        """
-
-        print(message)
+            self._heartbeat_fiber.cancel()
+            self._heartbeat_fiber.join()
+            self._heartbeat_fiber = None

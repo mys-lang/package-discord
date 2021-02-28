@@ -4,9 +4,13 @@ from discord.client import Handler
 from discord import Message
 
 class PingPongHandler(Handler):
+    client: Client
 
-    def on_message(self, message: Message, client: Client):
-        if message.author == client.user:
+    def __init__(self):
+        self.client = None
+
+    def on_message(self, message: Message):
+        if message.author == self.client.user:
             return
 
         if message.content == "!ping":
@@ -17,5 +21,7 @@ def main(argv: [string]):
     parser.add_positional("bot_token")
     args = parser.parse(argv)
 
-    client = Client(PingPongHandler())
+    handler = PingPongHandler()
+    client = Client(handler)
+    handler.client = client
     client.run(args.value_of("bot_token"))
