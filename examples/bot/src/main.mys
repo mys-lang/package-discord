@@ -13,7 +13,7 @@ class PingPongHandler(Handler):
             message.channel.send("pong")
 
 def main(argv: [string]):
-    parser = Parser("ping_pong_bot")
+    parser = Parser("bot")
     parser.add_positional("bot_token")
     args = parser.parse(argv)
 

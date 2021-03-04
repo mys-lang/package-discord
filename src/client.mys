@@ -1,11 +1,8 @@
 from fiber import Fiber
 from fiber import Event
-from fiber import Queue
 from . import Message
-from . import Channel
 from . import User
-from websocket.client import WebsocketClient
-from websocket.client import WebsocketClientHandler
+from websocket.client import Client as WebsocketClient
 
 class HeartbeatFiber(Fiber):
     _client: Client
@@ -35,7 +32,7 @@ class Handler:
 
         """
 
-class Client(WebsocketClientHandler):
+class Client:
     user: User
     _handler: Handler
     _websocket: WebsocketClient
@@ -47,23 +44,19 @@ class Client(WebsocketClientHandler):
         self._reader_fiber = None
         self._heartbeat_fiber = None
         self._pong_event = None
+        self._websocket = WebsocketClient()
 
     def _read_packet(self) -> Packet:
-        try:
-            return self._websocket.recv_text()
-        except ConnectionClosedError:
-            return None
+        return self._websocket.receive_text()
 
     def reset(self):
         self._websocket.disconnect()
 
     def run(self, token: string):
-        self._websocket = WebsocketClient()
-
         while True:
             self._websocket.connect("wss://gateway.discord.gg/?v=8&encoding=json")
             self._websocket.send_text()
-            message = self._websocket.recv_text()
+            message = self._websocket.receive_text()
             self._heartbeat_fiber = HeartbeatFiber(self)
             self._heartbeat_fiber.start()
 
