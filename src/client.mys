@@ -6,28 +6,29 @@ from websocket.client import Client as WebsocketClient
 
 class HeartbeatFiber(Fiber):
     _client: Client
-    _event: Event
-
-    def __init__(self, client: Client):
-        self._client = client
-        self._event = Event()
+#     _event: Event
+#
+#     def __init__(self, client: Client):
+#         self._client = client
+#         self._event = Event()
 
     def run(self):
         while True:
-            sleep(1.0)
-            self._event.clear()
-            self._client.send()
-
-            if self._event.wait(1.0):
-                self._client.reset()
-
-    def pong_received(self):
-        self._event.set()
+            pass
+#             sleep(1.0)
+#             self._event.clear()
+#             self._client.send()
+#
+#             if self._event.wait(1.0):
+#                 self._client.reset()
+#
+#     def pong_received(self):
+#         self._event.set()
 
 @trait
 class Handler:
 
-    def on_message(self, message: Message):
+    def on_message(self, message: Message, client: Client):
         """Called when a data message is received.
 
         """
@@ -41,37 +42,37 @@ class Client:
     def __init__(self, handler: Handler):
         self.user = None
         self._handler = handler
-        self._reader_fiber = None
+        #self._reader_fiber = None
         self._heartbeat_fiber = None
-        self._pong_event = None
+        #self._pong_event = None
         self._websocket = WebsocketClient()
-
-    def _read_packet(self) -> Packet:
-        return self._websocket.receive_text()
-
-    def reset(self):
-        self._websocket.disconnect()
+#
+#     def _read_packet(self) -> Packet:
+#         return self._websocket.receive_text()
+#
+#     def reset(self):
+#         self._websocket.disconnect()
 
     def run(self, token: string):
         while True:
-            self._websocket.connect("wss://gateway.discord.gg/?v=8&encoding=json")
-            self._websocket.send_text()
-            message = self._websocket.receive_text()
-            self._heartbeat_fiber = HeartbeatFiber(self)
-            self._heartbeat_fiber.start()
-
-            while True:
-                packet = self._read_packet()
-
-                if packet is None:
-                    break
-
-                match packet.op:
-                    case 1:
-                        self._handler.on_message(message)
-                    case 2:
-                        self._heartbeat_fiber.pong_received()
-
-            self._heartbeat_fiber.cancel()
-            self._heartbeat_fiber.join()
-            self._heartbeat_fiber = None
+            self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
+#             self._websocket.send_text()
+#             message = self._websocket.receive_text()
+#             self._heartbeat_fiber = HeartbeatFiber(self)
+#             self._heartbeat_fiber.start()
+#
+#             while True:
+#                 packet = self._read_packet()
+#
+#                 if packet is None:
+#                     break
+#
+#                 match packet.op:
+#                     case 1:
+#                         self._handler.on_message(message)
+#                     case 2:
+#                         self._heartbeat_fiber.pong_received()
+#
+#             self._heartbeat_fiber.cancel()
+#             self._heartbeat_fiber.join()
+#             self._heartbeat_fiber = None

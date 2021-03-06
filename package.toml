@@ -3,3 +3,9 @@ name = "discord"
 version = "0.1.0"
 authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 description = "Discord client."
+
+[dependencies]
+websocket = "*"
+net = "*"
+base64 = "*"
+random = "*"
