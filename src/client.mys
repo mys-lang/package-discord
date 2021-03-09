@@ -4,27 +4,21 @@ from fiber import sleep
 from . import Message
 from . import User
 from websocket.client import Client as WebsocketClient
+from json import decode as json_decode
+from json import Value as JsonValue
 
 class HeartbeatFiber(Fiber):
-    _client: Client
-#     _event: Event
-#
-#     def __init__(self, client: Client):
-#         self._client = client
-#         self._event = Event()
+    _websocket: WebsocketClient
+    _heartbeat_interval: f64
+
+    def __init__(self, websocket: WebsocketClient, heartbeat_interval: f64):
+        self._websocket = websocket
+        self._heartbeat_interval = heartbeat_interval
 
     def run(self):
         while True:
-            pass
-#             sleep(1.0)
-#             self._event.clear()
-#             self._client.send()
-#
-#             if self._event.wait(1.0):
-#                 self._client.reset()
-#
-#     def pong_received(self):
-#         self._event.set()
+            sleep(self._heartbeat_interval - 5.0)
+            self._websocket.send_text("{\"op\":1,\"d\":null}")
 
 @trait
 class Handler:
@@ -43,41 +37,49 @@ class Client:
     def __init__(self, handler: Handler):
         self.user = None
         self._handler = handler
-        #self._reader_fiber = None
         self._heartbeat_fiber = None
-        #self._pong_event = None
         self._websocket = WebsocketClient(secure=True)
-#
-#     def _read_packet(self) -> Packet:
-#         return self._websocket.receive_text()
-#
-#     def reset(self):
-#         self._websocket.disconnect()
+
+    def _read_packet(self) -> JsonValue:
+        message = self._websocket.receive_text()
+        print(message)
+
+        return json_decode(message)
 
     def run(self, token: string):
         while True:
             self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
 
             while True:
-                print(self._websocket.receive_text())
+                packet = self._read_packet()
+                heartbeat_interval = (packet
+                                      .getitem1("d")
+                                      .getitem1("heartbeat_interval")
+                                      .get_integer())
+                self._websocket.send_text("{\"op\":2,\"d\":{"
+                                          f"\"token\": \"{token}\","
+                                          "\"intents\": 513,"
+                                          "\"properties\": {"
+                                          "\"$os\": \"linux\","
+                                          "\"$browser\": \"mys\","
+                                          "\"$device\": \"mys\""
+                                          "}}}")
+                self._heartbeat_fiber = HeartbeatFiber(
+                    self._websocket,
+                    f64(heartbeat_interval) / 1000.0)
+                self._heartbeat_fiber.start()
 
-#             self._websocket.send_text()
-#             message = self._websocket.receive_text()
-#             self._heartbeat_fiber = HeartbeatFiber(self)
-#             self._heartbeat_fiber.start()
-#
-#             while True:
-#                 packet = self._read_packet()
-#
-#                 if packet is None:
-#                     break
-#
-#                 match packet.op:
-#                     case 1:
-#                         self._handler.on_message(message)
-#                     case 2:
-#                         self._heartbeat_fiber.pong_received()
-#
-#             self._heartbeat_fiber.cancel()
-#             self._heartbeat_fiber.join()
-#             self._heartbeat_fiber = None
+                while True:
+                    packet = self._read_packet()
+
+                    if packet is None:
+                        print("connection closed")
+                        return
+
+                    op = packet.getitem1("op").get_integer()
+
+                    match op:
+                        case 11:
+                            print("Heartbeat ack.")
+                        case _:
+                            print(f"Unhandled op {op}")
