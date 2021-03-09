@@ -1,5 +1,6 @@
 from fiber import Fiber
 from fiber import Event
+from fiber import sleep
 from . import Message
 from . import User
 from websocket.client import Client as WebsocketClient
@@ -45,7 +46,7 @@ class Client:
         #self._reader_fiber = None
         self._heartbeat_fiber = None
         #self._pong_event = None
-        self._websocket = WebsocketClient()
+        self._websocket = WebsocketClient(secure=True)
 #
 #     def _read_packet(self) -> Packet:
 #         return self._websocket.receive_text()
@@ -56,6 +57,10 @@ class Client:
     def run(self, token: string):
         while True:
             self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
+
+            while True:
+                print(self._websocket.receive_text())
+
 #             self._websocket.send_text()
 #             message = self._websocket.receive_text()
 #             self._heartbeat_fiber = HeartbeatFiber(self)
