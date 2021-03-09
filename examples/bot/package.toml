@@ -11,5 +11,5 @@ net = "*"
 base64 = "*"
 random = "*"
 hash = "*"
-json = { path = "../../../package-json" }
+json = "*"
 string = "*"
