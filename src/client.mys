@@ -5,10 +5,26 @@ from json import decode as json_decode
 from websocket.client import Client as WebsocketClient
 from . import Message
 from . import User
+from . import Channel
+
+@enum
+class Op:
+    Dispatch = 0
+    Heartbeat = 1
+    Identify = 2
+    PresenceUpdate = 3
+    VoiceStateUpdate = 4
+    Resume = 6
+    Reconnect = 7
+    RequestGuildMembers = 8
+    InvalidSession = 9
+    Hello = 10
+    HeartbeatAck = 11
 
 class HeartbeatFiber(Fiber):
     _websocket: WebsocketClient
     _heartbeat_interval: f64
+    _acked: bool
 
     def __init__(self, websocket: WebsocketClient, heartbeat_interval: f64):
         self._websocket = websocket
@@ -34,7 +50,7 @@ class Client:
     _heartbeat_fiber: HeartbeatFiber
 
     def __init__(self, handler: Handler):
-        self.user = None
+        self.user = User("TODO")
         self._handler = handler
         self._heartbeat_fiber = None
         self._websocket = WebsocketClient(secure=True)
@@ -45,40 +61,58 @@ class Client:
 
         return json_decode(message)
 
+    def _connect(self, token: string):
+        self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
+        packet = self._read_packet()
+        heartbeat_interval = (packet
+                              .getitem1("d")
+                              .getitem1("heartbeat_interval")
+                              .get_integer())
+        self._websocket.send_text("{\"op\":2,\"d\":{"
+                                  f"\"token\": \"{token}\","
+                                  "\"intents\": 513,"
+                                  "\"properties\": {"
+                                  "\"$os\": \"linux\","
+                                  "\"$browser\": \"mys\","
+                                  "\"$device\": \"mys\""
+                                  "}}}")
+        self._heartbeat_fiber = HeartbeatFiber(self._websocket,
+                                               f64(heartbeat_interval) / 1000.0)
+        self._heartbeat_fiber.start()
+
+    def _handle_dispatch_message_create(self, data: JsonValue):
+        user = User(data.getitem1("author").getitem1("username").get_string())
+        channel = Channel()
+        message = Message(channel,
+                          user,
+                          data.getitem1("content").get_string())
+        self._handler.on_message(message, self)
+
+    def _handle_dispatch(self, packet: JsonValue):
+        name = packet.getitem1("t").get_string()
+        data = packet.getitem1("d")
+
+        match name:
+            case "MESSAGE_CREATE":
+                self._handle_dispatch_message_create(data)
+            case _:
+                print(f"Unhandled dispatch event '{name}'.")
+
     def run(self, token: string):
         while True:
-            self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
+            self._connect(token)
 
             while True:
                 packet = self._read_packet()
-                heartbeat_interval = (packet
-                                      .getitem1("d")
-                                      .getitem1("heartbeat_interval")
-                                      .get_integer())
-                self._websocket.send_text("{\"op\":2,\"d\":{"
-                                          f"\"token\": \"{token}\","
-                                          "\"intents\": 513,"
-                                          "\"properties\": {"
-                                          "\"$os\": \"linux\","
-                                          "\"$browser\": \"mys\","
-                                          "\"$device\": \"mys\""
-                                          "}}}")
-                self._heartbeat_fiber = HeartbeatFiber(
-                    self._websocket,
-                    f64(heartbeat_interval) / 1000.0)
-                self._heartbeat_fiber.start()
 
-                while True:
-                    packet = self._read_packet()
+                if packet is None:
+                    print("Connection closed.")
+                    return
 
-                    if packet is None:
-                        print("connection closed")
-                        return
+                op = Op(packet.getitem1("op").get_integer())
 
-                    op = packet.getitem1("op").get_integer()
-
-                    match op:
-                        case 11:
-                            print("Heartbeat ack.")
-                        case _:
-                            print(f"Unhandled op {op}")
+                match op:
+                    case Op.Dispatch:
+                        self._handle_dispatch(packet)
+                    case _:
+                        print(f"Unhandled op {op}.")

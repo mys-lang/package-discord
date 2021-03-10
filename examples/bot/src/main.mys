@@ -6,7 +6,9 @@ from discord.client import Handler
 class MyHandler(Handler):
 
     def on_message(self, message: Message, client: Client):
-        if message.author == client.user:
+        print(message)
+
+        if message.author.name == client.user.name:
             return
 
         if message.content == "!ping":

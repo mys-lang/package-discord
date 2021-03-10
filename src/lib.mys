@@ -1,12 +1,25 @@
 class User:
-    pass
+    name: string
 
 class Message:
+    channel: Channel
     author: User
     content: string
-    channel: Channel
 
 class Channel:
 
     def send(self, text: string):
-        pass
+        channel_id = "12345"
+        token = "123"
+        request = (f"POST /api/v8/channels/{channel_id}/messages HTTP/1.1\r\n"
+                   f"Authorization: Bot {token}\r\n"
+                   "User-Agent: DiscordBot "
+                   "(https://github.com/mys-lang/package-discord 0.1.0)\n"
+                   "Content-Type: application/json\r\n"
+                   "\r\n"
+                   "{"
+                   f"\"content\":\"{text}\","
+                   "\"nonce\":\"\","
+                   "\"tts\":\"\""
+                   "}")
+        print(request)
