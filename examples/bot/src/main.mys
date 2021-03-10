@@ -6,7 +6,8 @@ from discord.client import Handler
 class MyHandler(Handler):
 
     def on_message(self, message: Message, client: Client):
-        print(message)
+        for line in message.content.split("\n"):
+            print(f"{message.author.name}: {line}")
 
         if message.author.name == client.user.name:
             return

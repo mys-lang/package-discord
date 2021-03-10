@@ -57,7 +57,7 @@ class Client:
 
     def _read_packet(self) -> JsonValue:
         message = self._websocket.receive_text()
-        print(message)
+        # print(message)
 
         if message is None:
             return None
@@ -105,7 +105,8 @@ class Client:
             case "MESSAGE_CREATE":
                 self._handle_dispatch_message_create(data)
             case _:
-                print(f"Unhandled dispatch event '{name}'.")
+                pass
+                # print(f"Unhandled dispatch event '{name}'.")
 
     def run(self, token: string):
         while True:
@@ -127,4 +128,5 @@ class Client:
                     case Op.Dispatch:
                         self._handle_dispatch(packet)
                     case _:
-                        print(f"Unhandled op {op}.")
+                        pass
+                        # print(f"Unhandled op {op}.")
