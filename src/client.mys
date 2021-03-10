@@ -59,11 +59,18 @@ class Client:
         message = self._websocket.receive_text()
         print(message)
 
+        if message is None:
+            return None
+
         return json_decode(message)
 
-    def _connect(self, token: string):
+    def _connect(self, token: string) -> bool:
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
         packet = self._read_packet()
+
+        if packet is None:
+            return False
+
         heartbeat_interval = (packet
                               .getitem1("d")
                               .getitem1("heartbeat_interval")
@@ -79,6 +86,8 @@ class Client:
         self._heartbeat_fiber = HeartbeatFiber(self._websocket,
                                                f64(heartbeat_interval) / 1000.0)
         self._heartbeat_fiber.start()
+
+        return True
 
     def _handle_dispatch_message_create(self, data: JsonValue):
         user = User(data.getitem1("author").getitem1("username").get_string())
@@ -100,14 +109,17 @@ class Client:
 
     def run(self, token: string):
         while True:
-            self._connect(token)
+            if not self._connect(token):
+                print("Connect failed, trying again in 1 minute.")
+                sleep(60.0)
+                continue
 
             while True:
                 packet = self._read_packet()
 
                 if packet is None:
                     print("Connection closed.")
-                    return
+                    break
 
                 op = Op(packet.getitem1("op").get_integer())
 
