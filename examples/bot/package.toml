@@ -6,10 +6,12 @@ authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 [dependencies]
 discord = { path = "../.." }
 argparse = "*"
-websocket = "*"
-net = "*"
+websocket = { path = "../../../package-websocket" }
+net = { path = "../../../package-net" }
 base64 = "*"
 random = "*"
 hash = "*"
 json = "*"
 string = "*"
+http = { path = "../../../package-http" }
+time = "*"

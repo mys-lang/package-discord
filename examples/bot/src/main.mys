@@ -2,18 +2,21 @@ from argparse import Parser
 from discord import Message
 from discord.client import Client
 from discord.client import Handler
+from time import LocalDateTime
 
 class MyHandler(Handler):
 
     def on_message(self, message: Message, client: Client):
-        for line in message.content.split("\n"):
-            print(f"{message.author.name}: {line}")
-
         if message.author.name == client.user.name:
             return
 
+        for line in message.content.split("\n"):
+            print(f"{message.author.name}: {line}")
+
         if message.content == "!ping":
             message.channel.send("pong")
+        elif message.content == "!date":
+            message.channel.send(str(LocalDateTime()))
 
 def main(argv: [string]):
     parser = Parser("bot")
