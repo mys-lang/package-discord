@@ -86,6 +86,8 @@ class Client:
                                                f64(heartbeat_interval) / 1000.0)
         self._heartbeat_fiber.start()
 
+        print("Connected.")
+
         return True
 
     def _handle_dispatch_message_create(self, data: JsonValue):
@@ -105,7 +107,6 @@ class Client:
                 self._handle_dispatch_message_create(data)
             case _:
                 pass
-                # print(f"Unhandled dispatch event '{name}'.")
 
     def run(self, token: string):
         while True:
@@ -128,4 +129,3 @@ class Client:
                         self._handle_dispatch(packet)
                     case _:
                         pass
-                        # print(f"Unhandled op {op}.")
