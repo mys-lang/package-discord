@@ -1,5 +1,6 @@
 from http import post
 from http import get
+from .client import Client
 
 class User:
     name: string
@@ -10,19 +11,20 @@ class Message:
     content: string
 
 class Channel:
+    _client: Client
+    _id: string
+
+    def __init__(self, client: Client):
+        self._client = client
+        self._id = "819075014015975465"
 
     def send(self, text: string):
-        channel_id = "819075014015975465"
-        token = "<token>"
-        body = f"{{\"content\":\"{text}\"}}"
-        request = (f"POST /api/v8/channels/{channel_id}/messages HTTP/1.1\r\n"
-                   "Host: discord.com\r\n"
-                   "User-Agent: DiscordBot "
-                   "(https://github.com/mys-lang/package-discord 0.1.0)\r\n"
-                   f"Authorization: Bot {token}\r\n"
-                   "Content-Type: application/json\r\n"
-                   "Accept: */*\r\n"
-                   f"Content-Length: {len(body)}\r\n"
-                   "\r\n"
-                   + body)
-        post("discord.com", request.to_utf8(), port=443, secure=True)
+        post("discord.com",
+             path=f"/api/v8/channels/{self._id}/messages",
+             port=443,
+             secure=True,
+             headers={
+                 "Content-Type": "application/json",
+                 "Authorization": f"Bot {self._client.token}"
+             },
+             data=f"{{\"content\":\"{text}\"}}".to_utf8())

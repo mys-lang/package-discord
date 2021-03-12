@@ -1,5 +1,6 @@
 from fiber import Fiber
 from fiber import sleep
+from fiber import CancelledError
 from json import Value as JsonValue
 from json import decode as json_decode
 from websocket.client import Client as WebsocketClient
@@ -21,7 +22,7 @@ class Op:
     Hello = 10
     HeartbeatAck = 11
 
-class HeartbeatFiber(Fiber):
+class _HeartbeatFiber(Fiber):
     _websocket: WebsocketClient
     _heartbeat_interval: f64
     _acked: bool
@@ -31,9 +32,12 @@ class HeartbeatFiber(Fiber):
         self._heartbeat_interval = heartbeat_interval
 
     def run(self):
-        while True:
-            sleep(self._heartbeat_interval - 5.0)
-            self._websocket.send_text("{\"op\":1,\"d\":null}")
+        try:
+            while True:
+                sleep(self._heartbeat_interval)
+                self._websocket.send_text("{\"op\":1,\"d\":null}")
+        except CancelledError:
+            print("Discord heartbeat fiber cancelled.")
 
 @trait
 class Handler:
@@ -44,12 +48,14 @@ class Handler:
         """
 
 class Client:
+    token: string
     user: User
     _handler: Handler
     _websocket: WebsocketClient
-    _heartbeat_fiber: HeartbeatFiber
+    _heartbeat_fiber: _HeartbeatFiber
 
-    def __init__(self, handler: Handler):
+    def __init__(self, token: string, handler: Handler):
+        self.token = token
         self.user = User("TODO")
         self._handler = handler
         self._heartbeat_fiber = None
@@ -63,7 +69,9 @@ class Client:
 
         return json_decode(message)
 
-    def _connect(self, token: string) -> bool:
+    def _connect(self) -> bool:
+        print("Connecting.")
+
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
         packet = self._read_packet()
 
@@ -75,15 +83,15 @@ class Client:
                               .getitem1("heartbeat_interval")
                               .get_integer())
         self._websocket.send_text("{\"op\":2,\"d\":{"
-                                  f"\"token\": \"{token}\","
+                                  f"\"token\": \"{self.token}\","
                                   "\"intents\": 513,"
                                   "\"properties\": {"
                                   "\"$os\": \"linux\","
                                   "\"$browser\": \"mys\","
                                   "\"$device\": \"mys\""
                                   "}}}")
-        self._heartbeat_fiber = HeartbeatFiber(self._websocket,
-                                               f64(heartbeat_interval) / 1000.0)
+        self._heartbeat_fiber = _HeartbeatFiber(self._websocket,
+                                                f64(heartbeat_interval) / 1000.0)
         self._heartbeat_fiber.start()
 
         print("Connected.")
@@ -92,7 +100,7 @@ class Client:
 
     def _handle_dispatch_message_create(self, data: JsonValue):
         user = User(data.getitem1("author").getitem1("username").get_string())
-        channel = Channel()
+        channel = Channel(self)
         message = Message(channel,
                           user,
                           data.getitem1("content").get_string())
@@ -108,12 +116,11 @@ class Client:
             case _:
                 pass
 
-    def run(self, token: string):
+    def run(self):
         while True:
-            if not self._connect(token):
+            if not self._connect():
                 print("Connect failed, trying again in 1 minute.")
-                sleep(60.0)
-                continue
+                return
 
             while True:
                 packet = self._read_packet()
@@ -127,5 +134,13 @@ class Client:
                 match op:
                     case Op.Dispatch:
                         self._handle_dispatch(packet)
-                    case _:
+                    case Op.HeartbeatAck:
                         pass
+                    case _:
+                        print(f"Unhandled op {op}.")
+
+            self._heartbeat_fiber.cancel()
+            self._heartbeat_fiber.join()
+            print("joined discord heartbeat")
+            self._websocket.disconnect()
+            print("websocket disconnected")

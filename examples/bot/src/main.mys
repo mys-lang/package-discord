@@ -23,5 +23,5 @@ def main(argv: [string]):
     parser.add_positional("bot_token")
     args = parser.parse(argv)
 
-    client = Client(MyHandler())
-    client.run(args.value_of("bot_token"))
+    client = Client(args.value_of("bot_token"), MyHandler())
+    client.run()
