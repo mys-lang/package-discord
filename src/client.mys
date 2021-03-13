@@ -1,12 +1,20 @@
+from http import get as http_get
+from http import HttpError
 from fiber import Fiber
 from fiber import sleep
 from fiber import CancelledError
 from json import Value as JsonValue
 from json import decode as json_decode
+from json import JsonError
 from websocket.client import Client as WebsocketClient
+from websocket import WebsocketError
+from net import NetError
 from . import Message
 from . import User
 from . import Channel
+
+class DiscordError(Error):
+    message: string
 
 @enum
 class Op:
@@ -23,21 +31,16 @@ class Op:
     HeartbeatAck = 11
 
 class _HeartbeatFiber(Fiber):
-    _websocket: WebsocketClient
-    _heartbeat_interval: f64
-    _acked: bool
-
-    def __init__(self, websocket: WebsocketClient, heartbeat_interval: f64):
-        self._websocket = websocket
-        self._heartbeat_interval = heartbeat_interval
+    websocket: WebsocketClient
+    heartbeat_interval: f64
 
     def run(self):
         try:
             while True:
-                sleep(self._heartbeat_interval)
-                self._websocket.send_text("{\"op\":1,\"d\":null}")
+                sleep(self.heartbeat_interval)
+                self.websocket.send_text("{\"op\":1,\"d\":null}")
         except CancelledError:
-            print("Discord heartbeat fiber cancelled.")
+            pass
 
 @trait
 class Handler:
@@ -49,14 +52,14 @@ class Handler:
 
 class Client:
     token: string
-    user: User
+    me: User
     _handler: Handler
     _websocket: WebsocketClient
     _heartbeat_fiber: _HeartbeatFiber
 
     def __init__(self, token: string, handler: Handler):
         self.token = token
-        self.user = User("TODO")
+        self.me = None
         self._handler = handler
         self._heartbeat_fiber = None
         self._websocket = WebsocketClient(secure=True)
@@ -69,15 +72,21 @@ class Client:
 
         return json_decode(message)
 
-    def _connect(self) -> bool:
-        print("Connecting.")
+    def _connect(self):
+        data = http_get("discord.com",
+                        path="/api/v8/users/@me",
+                        port=443,
+                        secure=True,
+                        headers={
+                            "Authorization": f"Bot {self.token}"
+                        })[1]
+        self.me = User(json_decode(string(data))
+                       .getitem1("username")
+                       .get_string())
 
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
+
         packet = self._read_packet()
-
-        if packet is None:
-            return False
-
         heartbeat_interval = (packet
                               .getitem1("d")
                               .getitem1("heartbeat_interval")
@@ -90,13 +99,10 @@ class Client:
                                   "\"$browser\": \"mys\","
                                   "\"$device\": \"mys\""
                                   "}}}")
+
         self._heartbeat_fiber = _HeartbeatFiber(self._websocket,
                                                 f64(heartbeat_interval) / 1000.0)
         self._heartbeat_fiber.start()
-
-        print("Connected.")
-
-        return True
 
     def _handle_dispatch_message_create(self, data: JsonValue):
         user = User(data.getitem1("author").getitem1("username").get_string())
@@ -118,29 +124,27 @@ class Client:
 
     def run(self):
         while True:
-            if not self._connect():
-                print("Connect failed, trying again in 1 minute.")
-                return
+            self._connect()
 
-            while True:
-                packet = self._read_packet()
+            try:
+                while True:
+                    packet = self._read_packet()
 
-                if packet is None:
-                    print("Connection closed.")
-                    break
+                    if packet is None:
+                        break
 
-                op = Op(packet.getitem1("op").get_integer())
+                    op = Op(packet.getitem1("op").get_integer())
 
-                match op:
-                    case Op.Dispatch:
-                        self._handle_dispatch(packet)
-                    case Op.HeartbeatAck:
-                        pass
-                    case _:
-                        print(f"Unhandled op {op}.")
-
-            self._heartbeat_fiber.cancel()
-            self._heartbeat_fiber.join()
-            print("joined discord heartbeat")
-            self._websocket.disconnect()
-            print("websocket disconnected")
+                    match op:
+                        case Op.Dispatch:
+                            self._handle_dispatch(packet)
+                        case Op.HeartbeatAck:
+                            pass
+                        case Op.Reconnect:
+                            pass
+                        case _:
+                            print(f"Unhandled op {op}.")
+            finally:
+                self._heartbeat_fiber.cancel()
+                self._heartbeat_fiber.join()
+                self._websocket.disconnect()

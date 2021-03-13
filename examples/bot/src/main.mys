@@ -7,7 +7,7 @@ from time import LocalDateTime
 class MyHandler(Handler):
 
     def on_message(self, message: Message, client: Client):
-        if message.author.name == client.user.name:
+        if message.author.name == client.me.name:
             return
 
         for line in message.content.split("\n"):

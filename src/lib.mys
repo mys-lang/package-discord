@@ -1,5 +1,4 @@
 from http import post
-from http import get
 from .client import Client
 
 class User:
