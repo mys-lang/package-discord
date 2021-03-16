@@ -80,17 +80,12 @@ class Client:
                         headers={
                             "Authorization": f"Bot {self.token}"
                         })[1]
-        self.me = User(json_decode(string(data))
-                       .getitem1("username")
-                       .get_string())
+        self.me = User(json_decode(string(data)).get("username").get_string())
 
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
 
         packet = self._read_packet()
-        heartbeat_interval = (packet
-                              .getitem1("d")
-                              .getitem1("heartbeat_interval")
-                              .get_integer())
+        heartbeat_interval = packet.get("d").get("heartbeat_interval").get_integer()
         self._websocket.send_text("{\"op\":2,\"d\":{"
                                   f"\"token\": \"{self.token}\","
                                   "\"intents\": 513,"
@@ -105,16 +100,14 @@ class Client:
         self._heartbeat_fiber.start()
 
     def _handle_dispatch_message_create(self, data: JsonValue):
-        user = User(data.getitem1("author").getitem1("username").get_string())
+        user = User(data.get("author").get("username").get_string())
         channel = Channel(self)
-        message = Message(channel,
-                          user,
-                          data.getitem1("content").get_string())
+        message = Message(channel, user, data.get("content").get_string())
         self._handler.on_message(message, self)
 
     def _handle_dispatch(self, packet: JsonValue):
-        name = packet.getitem1("t").get_string()
-        data = packet.getitem1("d")
+        name = packet.get("t").get_string()
+        data = packet.get("d")
 
         match name:
             case "MESSAGE_CREATE":
@@ -133,7 +126,7 @@ class Client:
                     if packet is None:
                         break
 
-                    op = Op(packet.getitem1("op").get_integer())
+                    op = Op(packet.get("op").get_integer())
 
                     match op:
                         case Op.Dispatch:
