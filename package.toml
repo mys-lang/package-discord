@@ -1,15 +1,15 @@
 [package]
 name = "discord"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 description = "Discord client."
 
 [dependencies]
-websocket = "*"
-net = "*"
-base64 = "*"
-random = "*"
-json = "*"
-hash = "*"
-string = "*"
-http = "*"
+websocket = "latest"
+net = "latest"
+base64 = "latest"
+random = "latest"
+json = "latest"
+hash = "latest"
+string = "latest"
+http = "latest"

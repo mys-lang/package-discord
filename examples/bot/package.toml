@@ -5,13 +5,13 @@ authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 
 [dependencies]
 discord = { path = "../.." }
-argparse = "*"
-websocket = "*"
-net = "*"
-base64 = "*"
-random = "*"
-hash = "*"
-json = "*"
-string = "*"
-http = "*"
-time = "*"
+argparse = "latest"
+websocket = "latest"
+net = "latest"
+base64 = "latest"
+random = "latest"
+hash = "latest"
+json = "latest"
+string = "latest"
+http = "latest"
+time = "latest"
