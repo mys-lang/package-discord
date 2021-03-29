@@ -1,10 +1,8 @@
 Discord client
 ==============
 
-!!! UNDER CONSTRUCTION, DOES NOT YET WORK !!!
-
 Discord client in the `Mys programming language`_.
 
-Documentation: https://mys-package-discord.readthedocs.io/en/latest/
+Documentation: https://mys-lang.org/package/discord/latest/index.html
 
 .. _Mys programming language: https://github.com/mys-lang/mys
