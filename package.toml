@@ -1,6 +1,6 @@
 [package]
 name = "discord"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Erik Moqvist <erik.moqvist@gmail.com>"]
 description = "Discord client."
 
@@ -13,3 +13,4 @@ json = "latest"
 hash = "latest"
 string = "latest"
 http = "latest"
+io = "latest"
