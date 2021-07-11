@@ -101,7 +101,8 @@ class Client:
 
     def _handle_dispatch_message_create(self, data: JsonValue):
         user = User(data.get("author").get("username").get_string())
-        channel = Channel(self)
+        channel_id = data.get("channel_id").get_string()
+        channel = Channel(self, channel_id)
         message = Message(channel, user, data.get("content").get_string())
         self._handler.on_message(message, self)
 

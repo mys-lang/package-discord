@@ -13,9 +13,9 @@ class Channel:
     _client: Client
     _id: string
 
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, id: string):
         self._client = client
-        self._id = "777073391818899458"
+        self._id = id
 
     def send(self, text: string):
         post("discord.com",

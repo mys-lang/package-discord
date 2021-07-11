@@ -10,9 +10,6 @@ class MyHandler(Handler):
         if message.author.name == client.me.name:
             return
 
-        for line in message.content.split("\n"):
-            print(f"{message.author.name}: {line}")
-
         if message.content == "!ping":
             message.channel.send("pong")
         elif message.content == "!date":
