@@ -26,8 +26,8 @@ Examples
        client = Client(MyHandler())
        client.run("your token here")
 
-Functions and types
-===================
+API
+===
 
 .. mysfile:: src/lib.mys
 
