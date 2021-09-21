@@ -79,7 +79,7 @@ class Client:
                         secure=True,
                         headers={
                             "Authorization": f"Bot {self.token}"
-                        })[1]
+                        }).content
         self.me = User(json_decode(string(data)).get("username").get_string())
 
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
