@@ -26,4 +26,4 @@ class Channel:
                  "Content-Type": "application/json",
                  "Authorization": f"Bot {self._client.token}"
              },
-             data=f"{{\"content\":\"{text}\"}}".to_utf8())
+             content=f"{{\"content\":\"{text}\"}}".to_utf8())
