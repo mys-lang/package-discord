@@ -34,7 +34,7 @@ class _HeartbeatFiber(Fiber):
     websocket: WebsocketClient
     heartbeat_interval: f64
 
-    def run(self):
+    func run(self):
         try:
             while True:
                 sleep(self.heartbeat_interval)
@@ -45,7 +45,7 @@ class _HeartbeatFiber(Fiber):
 @trait
 class Handler:
 
-    def on_message(self, message: Message, client: Client):
+    func on_message(self, message: Message, client: Client):
         """Called when a data message is received.
 
         """
@@ -57,14 +57,14 @@ class Client:
     _websocket: WebsocketClient
     _heartbeat_fiber: _HeartbeatFiber
 
-    def __init__(self, token: string, handler: Handler):
+    func __init__(self, token: string, handler: Handler):
         self.token = token
         self.me = None
         self._handler = handler
         self._heartbeat_fiber = None
         self._websocket = WebsocketClient(secure=True)
 
-    def _read_packet(self) -> JsonValue:
+    func _read_packet(self) -> JsonValue:
         message = self._websocket.receive_text()
 
         if message is None:
@@ -72,7 +72,7 @@ class Client:
 
         return json_decode(message)
 
-    def _connect(self):
+    func _connect(self):
         data = http_get("discord.com",
                         path="/api/v8/users/@me",
                         port=443,
@@ -99,14 +99,14 @@ class Client:
                                                 f64(heartbeat_interval) / 1000.0)
         self._heartbeat_fiber.start()
 
-    def _handle_dispatch_message_create(self, data: JsonValue):
+    func _handle_dispatch_message_create(self, data: JsonValue):
         user = User(data.get("author").get("username").get_string())
         channel_id = data.get("channel_id").get_string()
         channel = Channel(self, channel_id)
         message = Message(channel, user, data.get("content").get_string())
         self._handler.on_message(message, self)
 
-    def _handle_dispatch(self, packet: JsonValue):
+    func _handle_dispatch(self, packet: JsonValue):
         name = packet.get("t").get_string()
         data = packet.get("d")
 
@@ -116,7 +116,7 @@ class Client:
             case _:
                 pass
 
-    def run(self):
+    func run(self):
         while True:
             self._connect()
 

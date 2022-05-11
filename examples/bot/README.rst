@@ -10,5 +10,5 @@ Examples
 
    from ping_pong import add
 
-   def main():
+   func main():
        print('1 + 2 =', add(1, 2))

@@ -13,11 +13,11 @@ class Channel:
     _client: Client
     _id: string
 
-    def __init__(self, client: Client, id: string):
+    func __init__(self, client: Client, id: string):
         self._client = client
         self._id = id
 
-    def send(self, text: string):
+    func send(self, text: string):
         post("discord.com",
              path=f"/api/v8/channels/{self._id}/messages",
              port=443,

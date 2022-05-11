@@ -19,14 +19,14 @@ Examples
 
    class MyHandler(Handler):
 
-       def on_message(self, message: Message, client: Client):
+       func on_message(self, message: Message, client: Client):
            if message.author == client.user:
                return
 
            if message.content == "!hello":
                message.channel.send("Hello!")
 
-   def main():
+   func main():
        client = Client(MyHandler())
        client.run("your token here")
 

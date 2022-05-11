@@ -6,7 +6,7 @@ from time import LocalDateTime
 
 class MyHandler(Handler):
 
-    def on_message(self, message: Message, client: Client):
+    func on_message(self, message: Message, client: Client):
         if message.author.name == client.me.name:
             return
 
@@ -15,7 +15,7 @@ class MyHandler(Handler):
         elif message.content == "!date":
             message.channel.send(str(LocalDateTime()))
 
-def main(argv: [string]):
+func main(argv: [string]):
     parser = Parser("bot")
     parser.add_positional("bot_token")
     args = parser.parse(argv)
