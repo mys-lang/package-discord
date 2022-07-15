@@ -16,8 +16,7 @@ from . import User
 class DiscordError(Error):
     message: string
 
-@enum
-class Op:
+enum Op:
     Dispatch = 0
     Heartbeat = 1
     Identify = 2
