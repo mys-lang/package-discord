@@ -78,12 +78,12 @@ class Client:
                         headers={
                             "Authorization": f"Bot {self.token}"
                         }).content
-        self.me = User(json_decode(string(data)).get("username").get_string())
+        self.me = User(json_decode(string(data)).get("username").string())
 
         self._websocket.connect("gateway.discord.gg", 443, "/?v=8&encoding=json")
 
         packet = self._read_packet()
-        heartbeat_interval = packet.get("d").get("heartbeat_interval").get_integer()
+        heartbeat_interval = packet.get("d").get("heartbeat_interval").integer()
         self._websocket.send_text("{\"op\":2,\"d\":{"
                                   f"\"token\": \"{self.token}\","
                                   "\"intents\": 513,"
@@ -98,14 +98,14 @@ class Client:
         self._heartbeat_fiber.start()
 
     func _handle_dispatch_message_create(self, data: JsonValue):
-        user = User(data.get("author").get("username").get_string())
-        channel_id = data.get("channel_id").get_string()
+        user = User(data.get("author").get("username").string())
+        channel_id = data.get("channel_id").string()
         channel = Channel(self, channel_id)
-        message = Message(channel, user, data.get("content").get_string())
+        message = Message(channel, user, data.get("content").string())
         self._handler.on_message(message, self)
 
     func _handle_dispatch(self, packet: JsonValue):
-        name = packet.get("t").get_string()
+        name = packet.get("t").string()
         data = packet.get("d")
 
         match name:
@@ -125,7 +125,7 @@ class Client:
                     if packet is None:
                         break
 
-                    op = Op(packet.get("op").get_integer())
+                    op = Op(packet.get("op").integer())
 
                     match op:
                         case Op.Dispatch:
