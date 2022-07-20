@@ -50,10 +50,10 @@ trait Handler:
 
 class Client:
     token: string
-    me: User
+    me: User?
     _handler: Handler
     _websocket: WebsocketClient
-    _heartbeat_fiber: _HeartbeatFiber
+    _heartbeat_fiber: _HeartbeatFiber?
 
     func __init__(self, token: string, handler: Handler):
         self.token = token
@@ -62,7 +62,7 @@ class Client:
         self._heartbeat_fiber = None
         self._websocket = WebsocketClient(secure=True)
 
-    func _read_packet(self) -> JsonValue:
+    func _read_packet(self) -> JsonValue?:
         message = self._websocket.receive_text()
 
         if message is None:
