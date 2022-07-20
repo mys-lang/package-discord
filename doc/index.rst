@@ -33,6 +33,14 @@ Examples
 API
 ===
 
+discord.client
+--------------
+
+.. mysfile:: src/client.mys
+
+discord
+-------
+
 .. mysfile:: src/lib.mys
 
 .. |discord| image:: https://img.shields.io/discord/777073391320170507?label=Discord&logo=discord&logoColor=white
